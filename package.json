@@ -11,9 +11,11 @@
     "generate": "nuxt generate"
   },
   "dependencies": {
-    "nuxt": "^2.0.0",
     "@nuxtjs/axios": "^5.3.6",
-    "@nuxtjs/pwa": "^3.0.0-0"
+    "@nuxtjs/pwa": "^3.0.0-0",
+    "nuxt": "^2.0.0",
+    "planter": "^0.2.3",
+    "qrcode-generator": "^1.4.4"
   },
   "devDependencies": {
     "@nuxt/typescript-build": "^0.2.10",
