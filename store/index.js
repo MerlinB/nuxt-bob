@@ -31,7 +31,7 @@ export const getters = {
     if (!state.wallet) {
       return undefined;
     }
-    const typeNumber = 4;
+    const typeNumber = 3;
     const errorCorrectionLevel = "L";
     const qr = qrcode(typeNumber, errorCorrectionLevel);
     qr.addData(getters.getAddress);

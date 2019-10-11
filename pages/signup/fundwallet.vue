@@ -2,7 +2,13 @@
   <v-container class="ma-auto text-center">
     <p>Fund your wallet</p>
     <v-card class="ma-5">
-      <v-img :src="getQrDataURL" lazy-src="https://picsum.photos/id/11/10/6" aspect-ratio="1"></v-img>
+      <v-img :src="getQrDataURL" aspect-ratio="1">
+        <template v-slot:placeholder>
+          <v-row class="fill-height ma-0" align="center" justify="center">
+            <v-progress-circular indeterminate color="grey"></v-progress-circular>
+          </v-row>
+        </template>
+      </v-img>
     </v-card>
     <p class="text-uppercase">{{ getAddress }}</p>
   </v-container>
