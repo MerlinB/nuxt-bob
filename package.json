@@ -13,12 +13,16 @@
   "dependencies": {
     "@nuxtjs/axios": "^5.3.6",
     "@nuxtjs/pwa": "^3.0.0-0",
-    "nuxt": "^2.0.0",
-    "planter": "^0.2.3",
-    "qrcode-generator": "^1.4.4"
+    "@nuxtjs/toast": "^3.2.1",
+    "bitindex-sdk": "^3.2.1",
+    "nuxt": "^2.10.1",
+    "nuxt-clipboard2": "^0.2.1",
+    "planter": "^0.2.5",
+    "qrcode-generator": "^1.4.4",
+    "vuex-persist": "^2.1.0"
   },
   "devDependencies": {
     "@nuxt/typescript-build": "^0.2.10",
-    "@nuxtjs/vuetify": "^1.0.0"
+    "@nuxtjs/vuetify": "^1.9.0"
   }
 }

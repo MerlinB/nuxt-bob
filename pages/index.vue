@@ -1,6 +1,12 @@
 <template>
   <div>
     <chats></chats>
+
+    <nuxt-link to="/contacts">
+      <v-btn class="mx-2" fab fixed right bottom dark color="teal">
+        <v-icon dark>mdi-plus</v-icon>
+      </v-btn>
+    </nuxt-link>
   </div>
 </template>
 

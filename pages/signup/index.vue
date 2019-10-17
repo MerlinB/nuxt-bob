@@ -1,14 +1,16 @@
 <template>
   <v-container class="ma-auto">
-    <v-form ref="form" v-model="valid" lazy-validation class="text-center">
+    <v-form
+      ref="form"
+      v-model="valid"
+      lazy-validation
+      class="text-center"
+      v-on:submit.prevent="validate"
+    >
       <p>Let us know who you are</p>
       <v-text-field v-model="name" :rules="nameRules" label="Username" class="mx-5" required></v-text-field>
 
-      <v-btn :disabled="!valid" color="success" class="mt-8" @click="validate">Continue</v-btn>
-
-      <!-- <nuxt-link to="/test">
-        <v-btn color="success" class="mt-8" @click="validate">GO</v-btn>
-      </nuxt-link>-->
+      <v-btn :disabled="!valid" type="submit" color="success" class="mt-8">Continue</v-btn>
     </v-form>
   </v-container>
 </template>
@@ -17,6 +19,11 @@
 import { mapMutations } from "vuex";
 
 export default {
+  middleware: ({ store, redirect }) => {
+    if (store.state.userNode && store.state.xprivKey) {
+      redirect("/");
+    }
+  },
   layout: "blank",
   data: () => ({
     valid: true,
@@ -31,11 +38,10 @@ export default {
     validate() {
       if (this.$refs.form.validate()) {
         this.setUsername(this.name);
-        this.genWallet();
-        this.$router.push("signup/fundwallet");
+        this.$router.push("/signup/fundwallet");
       }
     },
-    ...mapMutations(["setUsername", "genWallet"])
+    ...mapMutations(["setUsername"])
   }
 };
 </script>
