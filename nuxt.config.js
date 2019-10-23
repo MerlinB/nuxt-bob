@@ -107,4 +107,4 @@ const routerBase =
       }
     : {};
 
-export default { ...config, ...routerConfig };
+export default { ...config, ...routerBase };

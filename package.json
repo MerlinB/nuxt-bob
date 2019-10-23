@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@nuxt/typescript-build": "^0.2.10",
-    "@nuxtjs/vuetify": "^1.9.0"
+    "@nuxtjs/vuetify": "^1.9.0",
+    "push-dir": "^0.4.1"
   }
 }
