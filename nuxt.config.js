@@ -1,6 +1,6 @@
 import colors from "vuetify/es5/util/colors";
 
-export default {
+const config = {
   mode: "spa",
   /*
    ** Headers of the page
@@ -19,11 +19,6 @@ export default {
     ],
     link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }]
   },
-
-  router: {
-    base: "/nuxt-bob/"
-  },
-
   /*
    ** Customize the progress-bar color
    */
@@ -102,3 +97,14 @@ export default {
     extend(config, ctx) {}
   }
 };
+
+const routerBase =
+  process.env.DEPLOY_ENV === "GH_PAGES"
+    ? {
+        router: {
+          base: "/nuxt-bob/"
+        }
+      }
+    : {};
+
+export default { ...config, ...routerConfig };
