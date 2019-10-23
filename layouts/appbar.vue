@@ -1,9 +1,16 @@
 <template>
   <v-app>
     <v-app-bar color="primary" dark app elevate-on-scroll>
-      <v-toolbar-title>BOB Chat</v-toolbar-title>
+      <v-btn icon v-if="$nuxt.$route.path != '/'" @click="$nuxt.$router.push('/')">
+        <v-icon>mdi-arrow-left</v-icon>
+      </v-btn>
+      <v-toolbar-title>{{ title }}</v-toolbar-title>
 
       <div class="flex-grow-1"></div>
+
+      <v-btn icon>
+        <v-icon>mdi-magnify</v-icon>
+      </v-btn>
 
       <v-menu left bottom>
         <template v-slot:activator="{ on }">
@@ -21,26 +28,25 @@
     </v-app-bar>
 
     <v-content>
-      <chats></chats>
-
-      <nuxt-link to="/contacts">
-        <v-btn class="mx-2" fab fixed right bottom dark color="teal">
-          <v-icon dark>mdi-plus</v-icon>
-        </v-btn>
-      </nuxt-link>
+      <nuxt />
     </v-content>
   </v-app>
 </template>
 
 <script>
-import Chats from "../components/Chat/Chats.vue";
-import { mapGetters, mapActions } from "vuex";
-
 export default {
-  middleware: "auth",
-  pageTitle: "BOB Chat",
-  components: {
-    chats: Chats
+  data() {
+    return {};
+  },
+  computed: {
+    title() {
+      return this.$route.matched.map(r => {
+        return r.components.default.options
+          ? r.components.default.options.pageTitle
+          : r.components.default.pageTitle;
+      })[0];
+    }
   }
 };
 </script>
+

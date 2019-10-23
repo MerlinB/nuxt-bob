@@ -12,22 +12,22 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
+import { mapActions, mapMutations } from "vuex";
 
 export default {
   middleware: ({ store, redirect }) => {
-    if (store.state.xprivKey) {
-      if (store.state.userNode) {
-        return redirect("/");
-      }
-      return redirect("/signup");
+    if (store.state.userNodeTx) {
+      return redirect("/");
     }
   },
   layout: "blank",
   methods: {
     async syncUser() {
+      this.setXprivKey(
+        "xprv9s21ZrQH143K2zJKULiRGhabnrAmZ68bzGh3LhivsgkW5U44meyTup6zeqc6vZa2PfM6x1KqoqVTauEA1qubAPNqsm87yAhHn4c9HTsohTb"
+      );
       await this.syncUserNode();
-      if (this.$store.state.userNode) {
+      if (this.$store.state.userNodeTx) {
         this.$router.push("/");
       } else {
         this.$toast.show("No user profile found", {
@@ -37,7 +37,8 @@ export default {
         });
       }
     },
-    ...mapActions(["syncUserNode"])
+    ...mapActions(["syncUserNode"]),
+    ...mapMutations(["setXprivKey"])
   }
 };
 </script>

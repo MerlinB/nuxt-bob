@@ -83,7 +83,7 @@ export default {
         return;
       }
       let tries = 0;
-      while (!this.$store.state.userNode && tries < 15) {
+      while (!this.$store.state.userNodeTx && tries < 15) {
         await new Promise(resolve => setTimeout(resolve, 1000));
         await this.syncUserNode();
         tries += 1;

@@ -1,92 +1,40 @@
 <template>
-    <v-list>
-      <v-list-item
-        v-for="chat in chats"
-        :key="chat.name"
-        @click=""
-      >
-        <v-list-item-avatar>
-          <v-img :src="chat.avatar"></v-img>
-        </v-list-item-avatar>
+  <v-list>
+    <v-list-item
+      v-for="(contact, i) in contactNodes"
+      :key="i"
+      @click="$nuxt.$router.push(`/chat/${contact.address}`)"
+    >
+      <!-- <v-list-item-avatar>
+        <v-img :src="chat.avatar"></v-img>
+      </v-list-item-avatar>-->
 
-        <v-list-item-content>
-          <v-list-item-title v-text="chat.name"></v-list-item-title>
-        </v-list-item-content>
-      </v-list-item>
-    </v-list>
+      <v-list-item-content>
+        <v-list-item-title v-text="contact.opReturn.s7"></v-list-item-title>
+      </v-list-item-content>
+    </v-list-item>
+  </v-list>
 </template>
 
 <script>
-  export default{
-    data() {
-      return {
-        chats: [
-          {
-            name: 'First chat',
-            avatar: 'https://cdn.vuetifyjs.com/images/lists/3.jpg'
-          },
-          {
-            name: 'Second chat',
-            avatar: 'https://cdn.vuetifyjs.com/images/lists/2.jpg'
-          },
-          {
-            name: 'Some chat',
-            avatar: 'https://cdn.vuetifyjs.com/images/lists/3.jpg'
-          },
-          {
-            name: 'Another chat',
-            avatar: 'https://cdn.vuetifyjs.com/images/lists/2.jpg'
-          },
-          {
-            name: 'Some chat',
-            avatar: 'https://cdn.vuetifyjs.com/images/lists/3.jpg'
-          },
-          {
-            name: 'Another chat',
-            avatar: 'https://cdn.vuetifyjs.com/images/lists/2.jpg'
-          },
-          {
-            name: 'Some chat',
-            avatar: 'https://cdn.vuetifyjs.com/images/lists/3.jpg'
-          },
-          {
-            name: 'Another chat',
-            avatar: 'https://cdn.vuetifyjs.com/images/lists/2.jpg'
-          },
-          {
-            name: 'Some chat',
-            avatar: 'https://cdn.vuetifyjs.com/images/lists/3.jpg'
-          },
-          {
-            name: 'Another chat',
-            avatar: 'https://cdn.vuetifyjs.com/images/lists/2.jpg'
-          },
-          {
-            name: 'Some chat',
-            avatar: 'https://cdn.vuetifyjs.com/images/lists/3.jpg'
-          },
-          {
-            name: 'Another chat',
-            avatar: 'https://cdn.vuetifyjs.com/images/lists/2.jpg'
-          },
-          {
-            name: 'Some chat',
-            avatar: 'https://cdn.vuetifyjs.com/images/lists/3.jpg'
-          },
-          {
-            name: 'Another chat',
-            avatar: 'https://cdn.vuetifyjs.com/images/lists/2.jpg'
-          },
-          {
-            name: 'Some chat',
-            avatar: 'https://cdn.vuetifyjs.com/images/lists/3.jpg'
-          },
-          {
-            name: 'Another chat',
-            avatar: 'https://cdn.vuetifyjs.com/images/lists/2.jpg'
-          },
-        ]
-      }
-    }
+import { mapGetters, mapActions, mapState } from "vuex";
+
+export default {
+  data() {
+    return {};
+  },
+  computed: {
+    ...mapGetters(["contactNodes"])
+  },
+
+  methods: {
+    ...mapActions(["syncReceivedMessages", "syncSentMessages", "syncContacts"])
+  },
+
+  async created() {
+    await this.syncReceivedMessages();
+    await this.syncSentMessages();
+    await this.syncContacts();
   }
+};
 </script>
