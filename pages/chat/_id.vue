@@ -8,7 +8,7 @@
     </v-app-bar>
 
     <v-content style="background: #eceff1">
-      <v-list color="transparent" tile dense class="messageList">
+      <v-list color="transparent" tile dense class="messageList" id="messageList">
         <v-list-item
           selectable
           :class="['msg', (sentByMe(message) ? 'me': 'them')]"
@@ -63,14 +63,16 @@ export default {
     await this.syncMessages();
     // this.createSocket();
     console.log(this.recipient);
+
+    $nuxt.$vuetify.goTo(999999999);
   },
   methods: {
-    ...mapActions(["syncReceivedMessages", "syncSentMessages"]),
+    ...mapActions(["syncMessages"]),
 
-    async syncMessages() {
-      await this.syncSentMessages(this.recipient.address);
-      await this.syncReceivedMessages(this.recipient.address);
-    },
+    // async syncMessages() {
+    //   await this.syncSentMessages(this.recipient.address);
+    //   await this.syncReceivedMessages(this.recipient.address);
+    // },
 
     // createSocket() {
     //   // Not available yet

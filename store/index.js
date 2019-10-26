@@ -133,52 +133,89 @@ export const actions = {
   //   commit("setQRDataURL", url);
   // },
 
-  async syncReceivedMessages({ commit, getters }, recipient) {
+  // async syncReceivedMessages({ commit, getters }, recipient) {
+  //   const query = {
+  //     head: true,
+  //     "out.s6": protocols.message,
+  //     "out.s7": getters.userNode.address
+  //   };
+
+  //   if (recipient) {
+  //     query["parent.a"] = recipient;
+  //   }
+
+  //   const sendToMe = await TreeHugger.findAllNodes({
+  //     find: query,
+  //     limit: 200
+  //   });
+  //   if (sendToMe.length) {
+  //     commit(
+  //       "updateMessages",
+  //       sendToMe.reduce((map, node) => {
+  //         map[node.address] = node.tx;
+  //         return map;
+  //       }, {})
+  //     );
+  //   }
+  // },
+
+  // async syncSentMessages({ commit, getters }, recipient) {
+  //   const query = {
+  //     head: true,
+  //     "out.s6": protocols.message,
+  //     "parent.a": getters.userNode.address
+  //   };
+
+  //   if (recipient) {
+  //     query["out.s7"] = recipient;
+  //   }
+
+  //   const sendByMe = await TreeHugger.findAllNodes({
+  //     find: query,
+  //     limit: 200
+  //   });
+  //   // console.log(sendByMe);
+  //   if (sendByMe.length) {
+  //     commit(
+  //       "updateMessages",
+  //       sendByMe.reduce((map, node) => {
+  //         map[node.address] = node.tx;
+  //         return map;
+  //       }, {})
+  //     );
+  //   }
+  // },
+
+  async syncMessages({ commit, getters }, recipient) {
     const query = {
-      head: true,
-      "out.s6": protocols.message,
-      "out.s7": getters.userNode.address
+      $or: [
+        {
+          head: true,
+          "out.s6": protocols.message,
+          "out.s7": getters.userNode.address
+        },
+        {
+          head: true,
+          "out.s6": protocols.message,
+          "parent.a": getters.userNode.address
+        }
+      ]
     };
 
     if (recipient) {
-      query["parent.a"] = recipient;
+      query.$or[0]["parent.a"] = recipient;
+      query.$or[0]["out.s7"] = recipient;
     }
 
-    const sendToMe = await TreeHugger.findAllNodes({
+    const response = await TreeHugger.findAllNodes({
       find: query,
       limit: 200
     });
-    if (sendToMe.length) {
+
+    if (response.length) {
       commit(
         "updateMessages",
-        sendToMe.reduce((map, node) => {
-          map[node.address] = node.tx;
-          return map;
-        }, {})
-      );
-    }
-  },
-
-  async syncSentMessages({ commit, getters }, recipient) {
-    const query = {
-      head: true,
-      "out.s6": protocols.message,
-      "parent.a": getters.userNode.address
-    };
-
-    if (recipient) {
-      query["out.s7"] = recipient;
-    }
-
-    const sendByMe = await TreeHugger.findAllNodes({
-      find: query,
-      limit: 200
-    });
-    // console.log(sendByMe);
-    if (sendByMe.length) {
-      commit(
-        "updateMessages",
-        sendByMe.reduce((map, node) => {
+        response.reduce((map, node) => {
           map[node.address] = node.tx;
           return map;
         }, {})
@@ -279,7 +316,9 @@ export const getters = {
   },
 
   contactNodes: (state, getters) => {
-    return Object.values(state.contacts).map(tx => new MetaNode(tx));
+    return Object.values(state.contacts)
+      .reverse()
+      .map(tx => new MetaNode(tx));
   },
 
   messagesByChat: (state, getters) => address => {

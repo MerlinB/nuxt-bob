@@ -28,12 +28,13 @@ export default {
   },
 
   methods: {
-    ...mapActions(["syncReceivedMessages", "syncSentMessages", "syncContacts"])
+    ...mapActions(["syncMessages", "syncContacts"])
   },
 
   async created() {
-    await this.syncReceivedMessages();
-    await this.syncSentMessages();
+    // await this.syncReceivedMessages();
+    // await this.syncSentMessages();
+    await this.syncMessages();
     await this.syncContacts();
   }
 };
