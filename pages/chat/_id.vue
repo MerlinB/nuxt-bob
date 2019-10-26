@@ -62,7 +62,7 @@ export default {
     sending: false
   }),
   computed: {
-    ...mapGetters(["wallet", "userNode", "ecies"]),
+    ...mapGetters(["wallet", "userNode", "encryptECIES", "decryptECIES"]),
     recipientName() {
       if (this.recipient) {
         return this.recipient.opReturn.s7;
@@ -91,6 +91,7 @@ export default {
     }
     await this.syncMessages();
     // this.createSocket();
+    console.log(this.recipient);
   },
   methods: {
     ...mapActions(["syncReceivedMessages", "syncSentMessages"]),
@@ -99,7 +100,9 @@ export default {
       this.sending = true;
 
       const message = this.recipientEcies.encrypt(this.message).toString("hex");
-      const messageToSelf = this.ecies.encrypt(this.message).toString("hex");
+      const messageToSelf = this.encryptECIES
+        .encrypt(this.message)
+        .toString("hex");
 
       const response = await this.userNode.createChild(this.wallet, {
         data: [
@@ -158,11 +161,11 @@ export default {
     decrypt(message) {
       try {
         if (this.sentByMe(message)) {
-          return this.ecies
+          return this.decryptECIES
             .decrypt(bsv.deps.Buffer.from(message.opReturn.s9, "hex"))
             .toString();
         } else {
-          return this.recipientEcies
+          return this.decryptECIES
             .decrypt(bsv.deps.Buffer.from(message.opReturn.s8, "hex"))
             .toString();
         }

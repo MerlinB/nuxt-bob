@@ -1,6 +1,7 @@
 import qrcode from "qrcode-generator";
 import { Planter, TreeHugger } from "planter";
 import MetaNode from "planter/lib/meta-node";
+import { getRandomKeyPath } from "planter/lib/utils";
 import { instance } from "bitindex-sdk";
 import VuexPersistence from "vuex-persist";
 import bsv from "bsv";
@@ -17,6 +18,7 @@ export const state = () => ({
   username: undefined, // Only for usernode creation
   // userAddress: undefined;
   utxos: [],
+  userNodeAddress: undefined,
   userNodeTx: undefined,
   messages: {},
   contacts: {}
@@ -36,7 +38,7 @@ export const mutations = {
     state.xprivKey = xprivKey;
   },
 
-  setUTXOS(state, utxos) {
+  setUTXOs(state, utxos) {
     state.utxos = utxos;
   },
 
@@ -50,6 +52,18 @@ export const mutations = {
 
   updateContacts(state, contacts) {
     state.contacts = { ...state.contacts, ...contacts };
+  },
+
+  setUserNodeAddress(state, address) {
+    state.userNodeAddress = address;
+  },
+
+  resetUser(state) {
+    state.messages = {};
+    state.contacts = {};
+    state.userNodeTx = undefined;
+    state.userNodeAddress = undefined;
+    state.username = undefined;
   }
 
   // setQRDataURL(state, url) {
@@ -67,30 +81,42 @@ export const actions = {
     );
   },
 
-  async updateUTXOs({ commit, getters }) {
+  async syncUTXOs({ commit, getters }) {
     const utxos = await bitindex.address.getUtxos(
       getters.wallet.fundingAddress
     );
     commit("setUTXOs", utxos);
   },
 
-  async createUserNode({ state, getters }) {
+  async createUserNode({ commit, state, getters }) {
     if (!state.username) {
       throw new Error("Username not set");
     }
+    const keyPath = getRandomKeyPath();
+    const encryptionKey = getters.xprivKey
+      .deriveChild(keyPath)
+      .publicKey.toString();
     const response = await getters.wallet.createNode({
-      data: [protocols.user, state.username, getters.wallet.publicKey]
+      data: [protocols.user, state.username, encryptionKey],
+      keyPath: keyPath
     });
     if (!response.txid) {
       throw new Error(reponse);
     }
-    // console.log(response);
+    commit("setUserNodeAddress", response.address);
+    console.log(response);
   },
 
   async syncUserNode({ commit, getters, state }) {
-    const response = await getters.wallet.findSingleNode({
+    const find = {
       "out.s6": protocols.user
-    });
+    };
+
+    if (state.userNodeAddress) {
+      find["node.a"] = state.userNodeAddress;
+    }
+
+    const response = await getters.wallet.findSingleNode(find);
     // console.log("response", response);
     if (response) {
       commit("setUserNodeTx", response.tx);
@@ -180,6 +206,12 @@ export const actions = {
 };
 
 export const getters = {
+  xprivKey: state => {
+    if (state.xprivKey) {
+      return bsv.HDPrivateKey.fromString(state.xprivKey);
+    }
+  },
+
   wallet: state => {
     return new Planter(state.xprivKey);
   },
@@ -207,13 +239,29 @@ export const getters = {
     return new MetaNode(state.userNodeTx);
   },
 
-  ecies: (state, getters) => {
-    const keyChild = getters.wallet.xprivKey.deriveChild(
-      getters.userNode.keyPath
-    );
-    return bsvEcies()
-      .privateKey(keyChild.privateKey)
-      .publicKey(keyChild.publicKey);
+  decryptECIES: (state, getters) => {
+    if (state.xprivKey && getters.userNode) {
+      const keyChild = getters.xprivKey.deriveChild(getters.userNode.keyPath);
+      return bsvEcies().privateKey(keyChild.privateKey);
+    }
+  },
+
+  encryptECIES: (state, getters) => {
+    if (state.xprivKey && getters.userNode) {
+      const keyChild = getters.xprivKey.deriveChild(getters.userNode.keyPath);
+      return bsvEcies().publicKey(keyChild.publicKey);
+    }
+  },
+
+  sortedMessages: state => {
+    return state.messages.sort((a, b) => {
+      if (a.in.some(i => i.e.h === b.tx.h)) {
+        return -1;
+      } else if (b.in.some(i => i.e.h === a.tx.h)) {
+        return 1;
+      }
+      return 0;
+    });
   },
 
   messageNodes: state => {
@@ -225,7 +273,7 @@ export const getters = {
 
   contactAddresses: (state, getters) => {
     const contacts = getters.messageNodes.reduce((contacts, message) => {
-      return contacts.add(message.opReturn.s7);
+      return contacts.add(message.opReturn.s7).add(message.tx.parent.a);
     }, new Set());
     return contacts;
   },

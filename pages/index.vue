@@ -13,8 +13,11 @@
         </template>
 
         <v-list>
-          <v-list-item v-for="n in 5" :key="n" @click="() => {}">
-            <v-list-item-title>Option {{ n }}</v-list-item-title>
+          <v-list-item @click="$nuxt.$router.push(`/profile`)">
+            <v-list-item-title>Profile</v-list-item-title>
+          </v-list-item>
+          <v-list-item @click="logout">
+            <v-list-item-title>Logout</v-list-item-title>
           </v-list-item>
         </v-list>
       </v-menu>
@@ -34,13 +37,20 @@
 
 <script>
 import Chats from "../components/Chat/Chats.vue";
-import { mapGetters, mapActions } from "vuex";
+import { mapGetters, mapActions, mapMutations } from "vuex";
 
 export default {
   middleware: "auth",
   pageTitle: "BOB Chat",
   components: {
     chats: Chats
+  },
+  methods: {
+    logout() {
+      this.resetUser();
+      this.$router.push("/setup");
+    },
+    ...mapMutations(["resetUser"])
   }
 };
 </script>
