@@ -9,7 +9,6 @@
 
     <v-content style="background: #eceff1">
       <v-list color="transparent" tile dense class="messageList">
-        <!-- <div class="d-flex flex-column flex-wrap"> -->
         <v-list-item
           selectable
           :class="['msg', (sentByMe(message) ? 'me': 'them')]"
@@ -18,32 +17,10 @@
         >
           <div :class="['speech-bubble']">{{ decrypt(message) }}</div>
         </v-list-item>
-        <!-- </div> -->
       </v-list>
-
-      <!-- <div class="flex-grow-1">
-        <v-textarea row-height="1" :auto-grow="true"></v-textarea>
-        <v-btn icon>
-          <v-icon>mdi-send</v-icon>
-        </v-btn>
-      </div>-->
     </v-content>
 
-    <v-footer id="chatInput" padless tile app style="background: white;">
-      <v-textarea
-        v-model="message"
-        row-height="1"
-        :auto-grow="true"
-        :autofocus="true"
-        :loading="sending"
-        style="margin-left: 1em;"
-        @keydown.enter.prevent
-        @keyup.enter.prevent="sendMessage"
-      ></v-textarea>
-      <v-btn icon style="margin: 0em 1em;" @click="sendMessage">
-        <v-icon>mdi-send</v-icon>
-      </v-btn>
-    </v-footer>
+    <chatInput :recipient="recipient"></chatInput>
   </v-app>
 </template>
 
@@ -51,18 +28,17 @@
 import { mapGetters, mapState, mapActions } from "vuex";
 import { TreeHugger } from "planter";
 import { protocols } from "../../defaults";
-import bsvEcies from "bsv/ecies";
 import bsv from "bsv";
+import chatInput from "../../components/Chat/input.vue";
 
 export default {
   middleware: "auth",
+  components: { chatInput },
   data: () => ({
-    recipient: undefined,
-    message: "",
-    sending: false
+    recipient: undefined
   }),
   computed: {
-    ...mapGetters(["wallet", "userNode", "encryptECIES", "decryptECIES"]),
+    ...mapGetters(["userNode", "decryptECIES"]),
     recipientName() {
       if (this.recipient) {
         return this.recipient.opReturn.s7;
@@ -73,11 +49,6 @@ export default {
         return [];
       }
       return this.$nuxt.$store.getters.messagesByChat(this.recipient.address);
-    },
-    recipientEcies() {
-      return bsvEcies().publicKey(
-        bsv.PublicKey.fromString(this.recipient.opReturn.s8)
-      );
     }
   },
   async created() {
@@ -95,27 +66,6 @@ export default {
   },
   methods: {
     ...mapActions(["syncReceivedMessages", "syncSentMessages"]),
-
-    async sendMessage() {
-      this.sending = true;
-
-      const message = this.recipientEcies.encrypt(this.message).toString("hex");
-      const messageToSelf = this.encryptECIES
-        .encrypt(this.message)
-        .toString("hex");
-
-      const response = await this.userNode.createChild(this.wallet, {
-        data: [
-          protocols.message,
-          this.recipient.address,
-          message,
-          messageToSelf
-        ]
-      });
-      this.message = "";
-      console.log(response);
-      this.sending = false;
-    },
 
     async syncMessages() {
       await this.syncSentMessages(this.recipient.address);
