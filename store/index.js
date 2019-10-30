@@ -186,6 +186,43 @@ export const actions = {
   //   }
   // },
 
+  // async syncMessages({ commit, getters }, recipient) {
+  //   const query = {
+  //     $or: [
+  //       {
+  //         head: true,
+  //         "out.s6": protocols.message,
+  //         "out.s7": getters.userNode.address
+  //       },
+  //       {
+  //         head: true,
+  //         "out.s6": protocols.message,
+  //         "parent.a": getters.userNode.address
+  //       }
+  //     ]
+  //   };
+
+  //   if (recipient) {
+  //     query.$or[0]["parent.a"] = recipient;
+  //     query.$or[0]["out.s7"] = recipient;
+  //   }
+
+  //   const response = await TreeHugger.findAllNodes({
+  //     find: query,
+  //     limit: 200
+  //   });
+
+  //   if (response.length) {
+  //     commit(
+  //       "updateMessages",
+  //       response.reduce((map, node) => {
+  //         map[node.address] = node.tx;
+  //         return map;
+  //       }, {})
+  //     );
+  //   }
+  // },
+
   async syncMessages({ commit, getters }, recipient) {
     const query = {
       $or: [
@@ -212,16 +249,44 @@ export const actions = {
       limit: 200
     });
 
-    if (response.length) {
-      commit(
-        "updateMessages",
-        response.reduce((map, node) => {
-          map[node.address] = node.tx;
-          return map;
-        }, {})
-      );
-    }
+    const currentIndex = getters.nextMempoolIndex;
+    const messages = response.reduce((map, node, index) => {
+      const existing = state.messages ? state.messages[node.address] : null;
+      map[node.address] = {
+        index: node.tx.blk
+          ? node.tx.i
+          : existing
+          ? existing.index
+          : currentIndex + index,
+        block: node.tx.blk ? node.tx.blk.i : null,
+        confirmed: true,
+        sender: node.tx.parent.a,
+        recipient: node.opReturn.s7,
+        content:
+          node.tx.parent.a === getters.userNode.address
+            ? getters.decrypt(node.opReturn.s9)
+            : getters.decrypt(node.opReturn.s8)
+      };
+      return map;
+    }, {});
+    commit("updateMessages", messages);
   },
+
+  addMessage({ commit, getters }, { address, recipient, content }) {
+    console.log("tests");
+    commit("updateMessages", {
+      [address]: {
+        index: getters.nextMempoolIndex,
+        block: null,
+        confirmed: false,
+        sender: getters.userNode.address,
+        recipient,
+        content
+      }
+    });
+  },
+
+  async sendMessage({ commit, gettesr }, { message, recipient }) {},
 
   async syncContacts({ commit, getters, state }) {
     const contacts = await TreeHugger.findAllNodes({
@@ -290,46 +355,102 @@ export const getters = {
     }
   },
 
-  sortedMessages: state => {
-    return state.messages.sort((a, b) => {
-      if (a.in.some(i => i.e.h === b.tx.h)) {
-        return -1;
-      } else if (b.in.some(i => i.e.h === a.tx.h)) {
-        return 1;
-      }
-      return 0;
-    });
-  },
-
-  messageNodes: state => {
-    if (!state.messages) {
-      return [];
-    }
-    return Object.values(state.messages).map(tx => new MetaNode(tx));
-  },
+  // messageNodes: state => {
+  //   if (!state.messages) {
+  //     return [];
+  //   }
+  //   return Object.values(state.messages).map(tx => new MetaNode(tx));
+  // },
 
   contactAddresses: (state, getters) => {
-    const contacts = getters.messageNodes.reduce((contacts, message) => {
-      return contacts.add(message.opReturn.s7).add(message.tx.parent.a);
+    const contacts = getters.sortedMessages.reduce((contacts, message) => {
+      return contacts.add(message.recipient).add(message.sender);
     }, new Set());
-    return contacts;
+    return contacts.add(getters.userNode.address);
   },
 
   contactNodes: (state, getters) => {
-    return Object.values(state.contacts)
-      .reverse()
-      .map(tx => new MetaNode(tx));
+    return Object.values(state.contacts).map(tx => new MetaNode(tx));
   },
 
   messagesByChat: (state, getters) => address => {
-    return getters.messageNodes.filter(node => {
+    return getters.sortedMessages.filter(message => {
       return (
-        (node.tx.parent.a === address &&
-          node.opReturn.s7 === getters.userNode.address) ||
-        (node.tx.parent.a === getters.userNode.address &&
-          node.opReturn.s7 === address)
+        (message.sender === address &&
+          message.recipient === getters.userNode.address) ||
+        (message.sender === getters.userNode.address &&
+          message.recipient === address)
       );
     });
+  },
+
+  sortedMessages: (state, getters) => {
+    return Object.values(state.messages).sort((a, b) => {
+      switch (a.block) {
+        case b.block:
+          return a.index - b.index;
+        case null:
+          return 1;
+        default:
+          switch (b.block) {
+            case null:
+              return -1;
+            default:
+              return a.block - b.block;
+          }
+      }
+
+      // if (a.block === b.block) {
+      //   return a.index - b.index;
+      // }
+
+      // if (a.block === null) {
+      //   return -1;
+      // }
+
+      // if (b.block === null) {
+      //   return 1;
+      // }
+
+      // return a.block - b.block;
+
+      // switch (a.block) {
+      //   case null:
+      //     switch (b.block) {
+      //       case a.block:
+      //         return a.index - b.index;
+      //       default:
+      //         return -1;
+      //     }
+      //   default:
+      //     switch (b.block) {
+      //       case null:
+      //         return 1;
+      //       case a.block:
+      //         return a.index - b.index;
+      //       default:
+      //         return a.block - b.block;
+      //     }
+      // }
+    });
+  },
+
+  decrypt: (state, getters) => message => {
+    try {
+      return getters.decryptECIES
+        .decrypt(bsv.deps.Buffer.from(message, "hex"))
+        .toString();
+    } catch (e) {
+      return e;
+    }
+  },
+
+  nextMempoolIndex: (state, getters) => {
+    const messages = Object.values(state.messages);
+    if (!messages) {
+      return 0;
+    }
+    return Math.max(messages.filter(m => !m.block).map(m => m.index)) + 1;
   }
 
   // username: state => {
@@ -341,3 +462,7 @@ export const getters = {
 };
 
 export const plugins = [vuexLocal.plugin];
+
+// function sentByMe(message) {
+//   return message.tx.parent.a === this.userNode.address;
+// }

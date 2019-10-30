@@ -15,7 +15,15 @@
           v-for="(message, i) in messages"
           :key="i"
         >
-          <div :class="['speech-bubble']">{{ decrypt(message) }}</div>
+          <div :class="['speech-bubble']">
+            {{ message.content }}
+            <span v-if="message.confirmed">
+              <v-icon dark small>mdi-check-all</v-icon>
+            </span>
+            <span v-if="!message.confirmed">
+              <v-icon dark small>mdi-check</v-icon>
+            </span>
+          </div>
         </v-list-item>
       </v-list>
     </v-content>
@@ -60,11 +68,10 @@ export default {
     if (response) {
       this.recipient = response;
     }
+    $nuxt.$vuetify.goTo(9999999);
     await this.syncMessages();
     // this.createSocket();
     console.log(this.recipient);
-
-    $nuxt.$vuetify.goTo(999999999);
   },
   methods: {
     ...mapActions(["syncMessages"]),
@@ -110,24 +117,24 @@ export default {
     //   this.me = me.filter(node => node.opReturn.s8).reverse();
     // },
 
-    decrypt(message) {
-      try {
-        if (this.sentByMe(message)) {
-          return this.decryptECIES
-            .decrypt(bsv.deps.Buffer.from(message.opReturn.s9, "hex"))
-            .toString();
-        } else {
-          return this.decryptECIES
-            .decrypt(bsv.deps.Buffer.from(message.opReturn.s8, "hex"))
-            .toString();
-        }
-      } catch (e) {
-        return e;
-      }
-    },
+    // decrypt(message) {
+    //   try {
+    //     if (this.sentByMe(message)) {
+    //       return this.decryptECIES
+    //         .decrypt(bsv.deps.Buffer.from(message.opReturn.s9, "hex"))
+    //         .toString();
+    //     } else {
+    //       return this.decryptECIES
+    //         .decrypt(bsv.deps.Buffer.from(message.opReturn.s8, "hex"))
+    //         .toString();
+    //     }
+    //   } catch (e) {
+    //     return e;
+    //   }
+    // },
 
     sentByMe(message) {
-      return message.tx.parent.a === this.userNode.address;
+      return message.sender === this.userNode.address;
     }
   }
 };

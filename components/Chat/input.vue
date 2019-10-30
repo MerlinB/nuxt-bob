@@ -1,8 +1,10 @@
 <template>
   <v-footer id="chatInput" padless tile app style="background: white;">
     <v-textarea
+      id="input"
       v-model="message"
       row-height="1"
+      :disabled="sending"
       :auto-grow="true"
       :autofocus="true"
       :loading="sending"
@@ -54,9 +56,17 @@ export default {
           ]
         }
       );
-      this.message = "";
       console.log(response);
+      if (response.txid) {
+        this.$store.dispatch("addMessage", {
+          address: response.address,
+          recipient: this.recipient.address,
+          content: this.message
+        });
+      }
+      this.message = "";
       this.sending = false;
+      document.getElementById("input").focus();
     }
   }
 };
