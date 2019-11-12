@@ -48,7 +48,6 @@ export default {
   }),
   computed: {
     ...mapGetters(["wallet"])
-    // ...mapState(["qrDataURL"])
   },
   created: function() {
     if (!this.$store.state.xprivKey) {
@@ -72,7 +71,7 @@ export default {
       this.loading = true;
 
       try {
-        await this.createUserNode();
+        await this.createUser();
       } catch (e) {
         this.$toast.show(e, {
           type: "error",
@@ -83,9 +82,9 @@ export default {
         return;
       }
       let tries = 0;
-      while (!this.$store.state.userNodeTx && tries < 15) {
+      while (!this.$store.state.user && tries < 15) {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        await this.syncUserNode();
+        await this.syncUser();
         tries += 1;
         console.log(tries);
       }
@@ -102,7 +101,7 @@ export default {
       const url = await qr.createDataURL(20);
       this.qrDataURL = url;
     },
-    ...mapActions(["createUserNode", "genWallet", "syncUserNode"])
+    ...mapActions(["createUser", "genWallet", "syncUser"])
   }
 };
 </script>

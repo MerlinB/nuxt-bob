@@ -7,6 +7,7 @@
       <v-toolbar-title v-show="!showSearch">Contacts</v-toolbar-title>
       <v-text-field
         hide-details
+        id="user_search"
         placeholder="Type keyword..."
         v-show="showSearch"
         v-model="search"
@@ -40,7 +41,7 @@
           </v-list-item-avatar>
 
           <v-list-item-content>
-            <v-list-item-title v-text="user.opReturn.s7"></v-list-item-title>
+            <v-list-item-title v-text="user.name"></v-list-item-title>
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -51,7 +52,6 @@
 <script>
 import { TreeHugger } from "planter";
 import { protocols } from "../defaults";
-import { isValidUser } from "../utils";
 
 export default {
   middleware: "auth",
@@ -67,26 +67,41 @@ export default {
 
   async created() {
     const find = {
-      "out.s6": protocols.user
+      "out.tape.cell": { $elemMatch: { s: protocols.user, i: 0 } }
     };
     const users = await TreeHugger.findAllNodes({ find });
-    this.users = users.filter(user => isValidUser(user));
+    this.users = users.map(user => this.$store.getters.getUser(user));
   },
 
   methods: {
     async searchUsers() {
       if (!this.showSearch) {
         this.showSearch = true;
+
+        document.getElementById("user_search").focus();
         return;
       }
       this.activeSearch = true;
 
       const find = {
-        "out.s6": protocols.user,
-        "out.s7": { $regex: this.search, $options: "i" }
+        "out.tape": {
+          $elemMatch: {
+            cell: {
+              $all: [
+                { $elemMatch: { s: protocols.user, i: 0 } },
+                {
+                  $elemMatch: {
+                    s: { $regex: this.search, $options: "i" },
+                    i: 1
+                  }
+                }
+              ]
+            }
+          }
+        }
       };
       const users = await TreeHugger.findAllNodes({ find });
-      this.users = users.filter(user => isValidUser(user));
+      this.users = users.map(user => this.$store.getters.getUser(user));
       this.activeSearch = false;
     },
 

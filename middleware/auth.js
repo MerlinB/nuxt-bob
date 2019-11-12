@@ -1,5 +1,5 @@
 export default ({ store, redirect }) => {
-  if (!store.state.userNodeTx) {
+  if (!store.state.user) {
     redirect("/setup");
   }
 };

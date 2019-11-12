@@ -1,7 +1,7 @@
 <template>
   <v-list>
     <v-list-item
-      v-for="(contact, i) in contactNodes"
+      v-for="(contact, i) in contacts"
       :key="i"
       @click="$nuxt.$router.push(`/chat/${contact.address}`)"
     >
@@ -10,7 +10,7 @@
       </v-list-item-avatar>-->
 
       <v-list-item-content>
-        <v-list-item-title v-text="contact.opReturn.s7"></v-list-item-title>
+        <v-list-item-title v-text="contact.name"></v-list-item-title>
       </v-list-item-content>
     </v-list-item>
   </v-list>
@@ -23,9 +23,7 @@ export default {
   data() {
     return {};
   },
-  computed: {
-    ...mapGetters(["contactNodes"])
-  },
+  computed: mapState(["contacts"]),
 
   methods: {
     ...mapActions(["syncMessages", "syncContacts"])

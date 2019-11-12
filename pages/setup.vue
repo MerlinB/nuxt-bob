@@ -9,9 +9,9 @@
     <v-dialog v-model="selectUser">
       <v-card>
         <v-list>
-          <v-list-item v-for="(node, i) in userNodes" :key="i" @click="login(node)">
+          <v-list-item v-for="(user, i) in users" :key="i" @click="login(user)">
             <v-list-item-content>
-              <v-list-item-title>{{ node.opReturn.s7 }}</v-list-item-title>
+              <v-list-item-title>{{ user.name }}</v-list-item-title>
             </v-list-item-content>
           </v-list-item>
         </v-list>
@@ -26,11 +26,10 @@
 <script>
 import { mapActions, mapMutations, mapGetters } from "vuex";
 import { protocols } from "../defaults";
-import { isValidUser } from "../utils";
 
 export default {
   middleware: ({ store, redirect }) => {
-    if (store.state.userNodeTx) {
+    if (store.state.user) {
       return redirect("/");
     }
   },
@@ -38,7 +37,7 @@ export default {
   data() {
     return {
       loading: false,
-      userNodes: [],
+      users: [],
       selectUser: false
     };
   },
@@ -48,42 +47,25 @@ export default {
       this.setXprivKey(
         "xprv9s21ZrQH143K2zJKULiRGhabnrAmZ68bzGh3LhivsgkW5U44meyTup6zeqc6vZa2PfM6x1KqoqVTauEA1qubAPNqsm87yAhHn4c9HTsohTb"
       );
-      await this.syncUserNodes();
+      await this.syncUsers();
       this.selectUser = true;
     },
 
     async login(user) {
-      this.chooseUser = false;
-      this.loading = true;
-      if (!isValidUser(user)) {
-        throw new Error("Invalid User");
-      }
-
-      this.setUserNodeAddress(user.address);
-      await this.syncUserNode();
-      this.loading = false;
-
-      if (this.$store.state.userNodeTx) {
-        this.$router.push("/");
-      } else {
-        this.$toast.show("No user profile found", {
-          type: "error",
-          position: "bottom-center",
-          duration: 2000
-        });
-      }
+      this.setUser(user);
+      this.$router.push("/");
     },
-
-    async syncUserNodes() {
+    async syncUsers() {
       this.loading = true;
       const nodes = await this.wallet.findAllNodes({
-        "out.s6": protocols.user
+        find: {
+          "out.tape.cell": { $elemMatch: { s: protocols.user, i: 0 } }
+        }
       });
-      this.userNodes = nodes.filter(node => isValidUser(node));
+      this.users = nodes.map(node => this.$store.getters.getUser(node));
       this.loading = false;
     },
-    ...mapActions(["syncUserNode"]),
-    ...mapMutations(["setXprivKey", "setUserNodeAddress"])
+    ...mapMutations(["setXprivKey", "setUser"])
   }
 };
 </script>

@@ -4,7 +4,7 @@
       <v-btn icon @click="$nuxt.$router.push('/')">
         <v-icon>mdi-arrow-left</v-icon>
       </v-btn>
-      <v-toolbar-title>{{ recipientName }}</v-toolbar-title>
+      <v-toolbar-title>{{ recipient.name }}</v-toolbar-title>
     </v-app-bar>
 
     <v-content style="background: #eceff1">
@@ -17,11 +17,8 @@
         >
           <div :class="['speech-bubble']">
             {{ message.content }}
-            <span v-if="message.confirmed">
-              <v-icon dark small>mdi-check-all</v-icon>
-            </span>
-            <span v-if="!message.confirmed">
-              <v-icon dark small>mdi-check</v-icon>
+            <span v-if="sentByMe(message)">
+              <v-icon dark small>{{ message.confirmed ? "mdi-check-all" : "mdi-check"}}</v-icon>
             </span>
           </div>
         </v-list-item>
@@ -42,44 +39,30 @@ import chatInput from "../../components/Chat/input.vue";
 export default {
   middleware: "auth",
   components: { chatInput },
-  data: () => ({
-    recipient: undefined
-  }),
   computed: {
-    ...mapGetters(["userNode", "decryptECIES"]),
-    recipientName() {
-      if (this.recipient) {
-        return this.recipient.opReturn.s7;
-      }
+    ...mapGetters(["decryptECIES"]),
+    ...mapState(["user"]),
+    address() {
+      return this.$nuxt.$route.params.id;
     },
     messages() {
       if (!this.recipient) {
         return [];
       }
-      return this.$nuxt.$store.getters.messagesByChat(this.recipient.address);
+      return this.$store.getters.messagesByChat(this.address);
+    },
+    recipient() {
+      return this.$store.state.contacts[this.address];
     }
   },
   async created() {
-    const find = {
-      "out.s6": protocols.user,
-      "node.a": this.$nuxt.$route.params.id
-    };
-    const response = await TreeHugger.findSingleNode({ find });
-    if (response) {
-      this.recipient = response;
-    }
     $nuxt.$vuetify.goTo(9999999);
+    await this.syncContacts([this.address]);
     await this.syncMessages();
     // this.createSocket();
-    console.log(this.recipient);
   },
   methods: {
-    ...mapActions(["syncMessages"]),
-
-    // async syncMessages() {
-    //   await this.syncSentMessages(this.recipient.address);
-    //   await this.syncReceivedMessages(this.recipient.address);
-    // },
+    ...mapActions(["syncMessages", "syncContacts"]),
 
     // createSocket() {
     //   // Not available yet
@@ -105,36 +88,8 @@ export default {
     //   };
     // },
 
-    // async syncMessages() {
-    //   const find = {
-    //     "parent.id": this.userNode.id,
-    //     head: true,
-    //     "out.s6": protocols.message,
-    //     "out.s7": { $in: [this.recipient.address, this.userNode.address] }
-    //   };
-    //   // console.log(JSON.stringify(find));
-    //   const me = await this.wallet.findAllNodes(find);
-    //   this.me = me.filter(node => node.opReturn.s8).reverse();
-    // },
-
-    // decrypt(message) {
-    //   try {
-    //     if (this.sentByMe(message)) {
-    //       return this.decryptECIES
-    //         .decrypt(bsv.deps.Buffer.from(message.opReturn.s9, "hex"))
-    //         .toString();
-    //     } else {
-    //       return this.decryptECIES
-    //         .decrypt(bsv.deps.Buffer.from(message.opReturn.s8, "hex"))
-    //         .toString();
-    //     }
-    //   } catch (e) {
-    //     return e;
-    //   }
-    // },
-
     sentByMe(message) {
-      return message.sender === this.userNode.address;
+      return message.sender === this.user.address;
     }
   }
 };

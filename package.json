@@ -20,7 +20,7 @@
     "bitindex-sdk": "^3.2.1",
     "nuxt": "^2.10.1",
     "nuxt-clipboard2": "^0.2.1",
-    "planter": "^0.2.5",
+    "planter": "git+https://github.com/MerlinB/planter.git",
     "qrcode-generator": "^1.4.4",
     "vuex-persist": "^2.1.0"
   },

@@ -9,7 +9,7 @@
 
     <v-content>
       <v-container class="ma-auto text-center mt-5">
-        <h1>{{ userNode.opReturn.s7 }}</h1>
+        <h1>{{ user.name }}</h1>
         <v-card class="mx-auto my-5" max-width="300">
           <v-img :src="qrDataURL" aspect-ratio="1">
             <template v-slot:placeholder>
@@ -30,7 +30,7 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from "vuex";
+import { mapGetters, mapActions, mapState } from "vuex";
 import qrcode from "qrcode-generator";
 
 export default {
@@ -38,7 +38,7 @@ export default {
   data: () => ({
     qrDataURL: undefined
   }),
-  computed: mapGetters(["userNode", "wallet", "balance"]),
+  computed: { ...mapGetters(["wallet", "balance"]), ...mapState(["user"]) },
   created() {
     this.syncUTXOs();
     this.genQRDataURL();

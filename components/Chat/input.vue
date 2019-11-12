@@ -31,9 +31,11 @@ export default {
   props: ["recipient"],
   computed: {
     recipientECIES() {
-      return bsvEcies().publicKey(
-        bsv.PublicKey.fromString(this.recipient.opReturn.s8)
-      );
+      if (this.recipient) {
+        return bsvEcies().publicKey(
+          bsv.PublicKey.fromString(this.recipient.publicKey)
+        );
+      }
     }
   },
   methods: {

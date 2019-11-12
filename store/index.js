@@ -1,4 +1,3 @@
-import qrcode from "qrcode-generator";
 import { Planter, TreeHugger } from "planter";
 import MetaNode from "planter/lib/meta-node";
 import { getRandomKeyPath } from "planter/lib/utils";
@@ -16,13 +15,11 @@ const vuexLocal = new VuexPersistence({
 export const state = () => ({
   xprivKey: undefined,
   username: undefined, // Only for usernode creation
-  // userAddress: undefined;
   utxos: [],
   userNodeAddress: undefined,
-  userNodeTx: undefined,
+  user: undefined,
   messages: {},
   contacts: {}
-  // qrDataURL: ""; // Some problems with string lengths?
 });
 
 export const mutations = {
@@ -42,8 +39,8 @@ export const mutations = {
     state.utxos = utxos;
   },
 
-  setUserNodeTx(state, tx) {
-    state.userNodeTx = tx;
+  setUser(state, user) {
+    state.user = user;
   },
 
   updateMessages(state, messages) {
@@ -61,14 +58,10 @@ export const mutations = {
   resetUser(state) {
     state.messages = {};
     state.contacts = {};
-    state.userNodeTx = undefined;
     state.userNodeAddress = undefined;
     state.username = undefined;
+    state.user = undefined;
   }
-
-  // setQRDataURL(state, url) {
-  //   state.qrDataURL = url;
-  // }
 };
 
 export const actions = {
@@ -88,7 +81,7 @@ export const actions = {
     commit("setUTXOs", utxos);
   },
 
-  async createUserNode({ commit, state, getters }) {
+  async createUser({ commit, state, getters }) {
     if (!state.username) {
       throw new Error("Username not set");
     }
@@ -107,141 +100,60 @@ export const actions = {
     console.log(response);
   },
 
-  async syncUserNode({ commit, getters, state }) {
+  async syncUser({ commit, getters, state }) {
     const find = {
-      "out.s6": protocols.user
+      "out.tape.cell": { $elemMatch: { s: protocols.user, i: 0 } }
     };
 
     if (state.userNodeAddress) {
       find["node.a"] = state.userNodeAddress;
     }
 
-    const response = await getters.wallet.findSingleNode(find);
-    // console.log("response", response);
+    const response = await getters.wallet.findSingleNode({ find });
+
     if (response) {
-      commit("setUserNodeTx", response.tx);
+      commit("setUser", getters.getUser(node));
     }
   },
 
-  // async genQRDataURL({ commit, getters }) {
-  //   const typeNumber = 3;
-  //   const errorCorrectionLevel = "L";
-  //   const qr = qrcode(typeNumber, errorCorrectionLevel);
-  //   qr.addData(getters.wallet.fundingAddress);
-  //   await qr.make();
-  //   const url = await qr.createDataURL(20);
-  //   commit("setQRDataURL", url);
-  // },
+  async syncMessages({ commit, getters, state }, recipient) {
+    if (!state.user) {
+      return;
+    }
 
-  // async syncReceivedMessages({ commit, getters }, recipient) {
-  //   const query = {
-  //     head: true,
-  //     "out.s6": protocols.message,
-  //     "out.s7": getters.userNode.address
-  //   };
-
-  //   if (recipient) {
-  //     query["parent.a"] = recipient;
-  //   }
-
-  //   const sendToMe = await TreeHugger.findAllNodes({
-  //     find: query,
-  //     limit: 200
-  //   });
-  //   if (sendToMe.length) {
-  //     commit(
-  //       "updateMessages",
-  //       sendToMe.reduce((map, node) => {
-  //         map[node.address] = node.tx;
-  //         return map;
-  //       }, {})
-  //     );
-  //   }
-  // },
-
-  // async syncSentMessages({ commit, getters }, recipient) {
-  //   const query = {
-  //     head: true,
-  //     "out.s6": protocols.message,
-  //     "parent.a": getters.userNode.address
-  //   };
-
-  //   if (recipient) {
-  //     query["out.s7"] = recipient;
-  //   }
-
-  //   const sendByMe = await TreeHugger.findAllNodes({
-  //     find: query,
-  //     limit: 200
-  //   });
-  //   // console.log(sendByMe);
-  //   if (sendByMe.length) {
-  //     commit(
-  //       "updateMessages",
-  //       sendByMe.reduce((map, node) => {
-  //         map[node.address] = node.tx;
-  //         return map;
-  //       }, {})
-  //     );
-  //   }
-  // },
-
-  // async syncMessages({ commit, getters }, recipient) {
-  //   const query = {
-  //     $or: [
-  //       {
-  //         head: true,
-  //         "out.s6": protocols.message,
-  //         "out.s7": getters.userNode.address
-  //       },
-  //       {
-  //         head: true,
-  //         "out.s6": protocols.message,
-  //         "parent.a": getters.userNode.address
-  //       }
-  //     ]
-  //   };
-
-  //   if (recipient) {
-  //     query.$or[0]["parent.a"] = recipient;
-  //     query.$or[0]["out.s7"] = recipient;
-  //   }
-
-  //   const response = await TreeHugger.findAllNodes({
-  //     find: query,
-  //     limit: 200
-  //   });
-
-  //   if (response.length) {
-  //     commit(
-  //       "updateMessages",
-  //       response.reduce((map, node) => {
-  //         map[node.address] = node.tx;
-  //         return map;
-  //       }, {})
-  //     );
-  //   }
-  // },
-
-  async syncMessages({ commit, getters }, recipient) {
     const query = {
       $or: [
         {
-          head: true,
-          "out.s6": protocols.message,
-          "out.s7": getters.userNode.address
+          "out.tape": {
+            $elemMatch: {
+              cell: {
+                $all: [
+                  { $elemMatch: { s: protocols.message, i: 0 } },
+                  { $elemMatch: { s: state.user.address, i: 1 } }
+                ]
+              }
+            }
+          }
         },
         {
-          head: true,
-          "out.s6": protocols.message,
-          "parent.a": getters.userNode.address
+          "parent.a": state.user.address,
+          "out.tape": {
+            $elemMatch: {
+              cell: {
+                $all: [{ $elemMatch: { s: protocols.message, i: 0 } }]
+              }
+            }
+          }
         }
       ]
     };
 
     if (recipient) {
       query.$or[0]["parent.a"] = recipient;
-      query.$or[0]["out.s7"] = recipient;
+      query.$or[0]["out.tape"].$elemMatch.cell.$all.push({
+        s: recipient,
+        i: 3
+      });
     }
 
     const response = await TreeHugger.findAllNodes({
@@ -258,14 +170,8 @@ export const actions = {
           : existing
           ? existing.index
           : currentIndex + index,
-        block: node.tx.blk ? node.tx.blk.i : null,
         confirmed: true,
-        sender: node.tx.parent.a,
-        recipient: node.opReturn.s7,
-        content:
-          node.tx.parent.a === getters.userNode.address
-            ? getters.decrypt(node.opReturn.s9)
-            : getters.decrypt(node.opReturn.s8)
+        ...getters.getMessage(node)
       };
       return map;
     }, {});
@@ -273,7 +179,6 @@ export const actions = {
   },
 
   addMessage({ commit, getters }, { address, recipient, content }) {
-    console.log("tests");
     commit("updateMessages", {
       [address]: {
         index: getters.nextMempoolIndex,
@@ -286,24 +191,21 @@ export const actions = {
     });
   },
 
-  async sendMessage({ commit, gettesr }, { message, recipient }) {},
+  async sendMessage({ commit, getters }, { message, recipient }) {},
 
-  async syncContacts({ commit, getters, state }) {
-    const contacts = await TreeHugger.findAllNodes({
+  async syncContacts({ commit, getters, state }, addresses) {
+    const response = await TreeHugger.findAllNodes({
       find: {
-        "node.a": { $in: [...getters.contactAddresses] }
+        "node.a": { $in: addresses ? addresses : [...getters.contactAddresses] }
       }
     });
 
-    if (contacts.length) {
-      commit(
-        "updateContacts",
-        contacts.reduce((map, node) => {
-          map[node.address] = node.tx;
-          return map;
-        }, {})
-      );
-    }
+    const contacts = response.reduce((map, node, index) => {
+      map[node.address] = getters.getUser(node);
+      return map;
+    }, {});
+
+    commit("updateContacts", contacts);
   }
 };
 
@@ -318,15 +220,6 @@ export const getters = {
     return new Planter(state.xprivKey);
   },
 
-  // qrDataURL: (state, getters) => {
-  //   const typeNumber = 3;
-  //   const errorCorrectionLevel = "L";
-  //   const qr = qrcode(typeNumber, errorCorrectionLevel);
-  //   qr.addData(getters.wallet.fundingAddress);
-  //   qr.make();
-  //   return qr.createDataURL(20);
-  // },
-
   balance: state => {
     if (state.utxos) {
       return state.utxos.reduce((a, c) => a + c.satoshis, 0);
@@ -335,51 +228,39 @@ export const getters = {
   },
 
   userNode: state => {
-    if (!state.userNodeTx) {
+    if (!state.user) {
       return null;
     }
-    return new MetaNode(state.userNodeTx);
+    return new MetaNode(state.user.tx);
   },
 
   decryptECIES: (state, getters) => {
-    if (state.xprivKey && getters.userNode) {
-      const keyChild = getters.xprivKey.deriveChild(getters.userNode.keyPath);
+    if (state.xprivKey && state.user) {
+      const keyChild = getters.xprivKey.deriveChild(state.user.keyPath);
       return bsvEcies().privateKey(keyChild.privateKey);
     }
   },
 
   encryptECIES: (state, getters) => {
-    if (state.xprivKey && getters.userNode) {
-      const keyChild = getters.xprivKey.deriveChild(getters.userNode.keyPath);
+    if (state.xprivKey && state.user) {
+      const keyChild = getters.xprivKey.deriveChild(state.user.keyPath);
       return bsvEcies().publicKey(keyChild.publicKey);
     }
   },
 
-  // messageNodes: state => {
-  //   if (!state.messages) {
-  //     return [];
-  //   }
-  //   return Object.values(state.messages).map(tx => new MetaNode(tx));
-  // },
-
   contactAddresses: (state, getters) => {
-    const contacts = getters.sortedMessages.reduce((contacts, message) => {
-      return contacts.add(message.recipient).add(message.sender);
+    const contacts = getters.sortedMessages.reduce((set, message) => {
+      return set.add(message.recipient).add(message.sender);
     }, new Set());
-    return contacts.add(getters.userNode.address);
-  },
-
-  contactNodes: (state, getters) => {
-    return Object.values(state.contacts).map(tx => new MetaNode(tx));
+    return contacts.add(state.user.address);
   },
 
   messagesByChat: (state, getters) => address => {
     return getters.sortedMessages.filter(message => {
       return (
         (message.sender === address &&
-          message.recipient === getters.userNode.address) ||
-        (message.sender === getters.userNode.address &&
-          message.recipient === address)
+          message.recipient === state.user.address) ||
+        (message.sender === state.user.address && message.recipient === address)
       );
     });
   },
@@ -413,25 +294,6 @@ export const getters = {
       // }
 
       // return a.block - b.block;
-
-      // switch (a.block) {
-      //   case null:
-      //     switch (b.block) {
-      //       case a.block:
-      //         return a.index - b.index;
-      //       default:
-      //         return -1;
-      //     }
-      //   default:
-      //     switch (b.block) {
-      //       case null:
-      //         return 1;
-      //       case a.block:
-      //         return a.index - b.index;
-      //       default:
-      //         return a.block - b.block;
-      //     }
-      // }
     });
   },
 
@@ -451,18 +313,39 @@ export const getters = {
       return 0;
     }
     return Math.max(messages.filter(m => !m.block).map(m => m.index)) + 1;
-  }
+  },
 
-  // username: state => {
-  //   if (!state.userNode) {
-  //     return undefined;
-  //   }
-  //   return state.userNode.opReturn.s7;
-  // }
+  getUser: (state, getters) => node => {
+    const output = node.opReturn.find(c => c.cell[0].s === protocols.user);
+
+    const publicKey = output ? output.cell[2].s : null;
+    if (publicKey && !bsv.PublicKey.isValid(publicKey)) {
+      throw new Error("Invalid public key for user");
+    }
+    return {
+      address: node.address,
+      name: output.cell[1].s,
+      publicKey,
+      keyPath: node.keyPath,
+      tx: node.tx
+    };
+  },
+
+  getMessage: (state, getters) => node => {
+    const output = node.opReturn.find(c => c.cell[0].s === protocols.message);
+    return {
+      address: node.address,
+      block: node.tx.blk ? node.tx.blk.i : null,
+      sender: node.tx.parent.a,
+      recipient: output.cell[1].s,
+      content:
+        node.tx.parent.a === state.user.address
+          ? getters.decrypt(output.cell[3].s)
+          : getters.decrypt(output.cell[2].s),
+      keyPath: node.keyPath,
+      tx: node.tx
+    };
+  }
 };
 
 export const plugins = [vuexLocal.plugin];
-
-// function sentByMe(message) {
-//   return message.tx.parent.a === this.userNode.address;
-// }
