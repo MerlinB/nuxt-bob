@@ -67,11 +67,11 @@ export const mutations = {
 export const actions = {
   async genWallet({ commit }) {
     const xprivKey = bsv.HDPrivateKey.fromRandom().toString();
-    // commit("setXprivKey", xprivKey);
-    commit(
-      "setXprivKey",
-      "xprv9s21ZrQH143K2zJKULiRGhabnrAmZ68bzGh3LhivsgkW5U44meyTup6zeqc6vZa2PfM6x1KqoqVTauEA1qubAPNqsm87yAhHn4c9HTsohTb"
-    );
+    commit("setXprivKey", xprivKey);
+    // commit(
+    //   "setXprivKey",
+    //   "xprv9s21ZrQH143K2zJKULiRGhabnrAmZ68bzGh3LhivsgkW5U44meyTup6zeqc6vZa2PfM6x1KqoqVTauEA1qubAPNqsm87yAhHn4c9HTsohTb"
+    // );
   },
 
   async syncUTXOs({ commit, getters }) {
@@ -112,7 +112,7 @@ export const actions = {
     const response = await getters.wallet.findSingleNode({ find });
 
     if (response) {
-      commit("setUser", getters.getUser(node));
+      commit("setUser", getters.getUser(response));
     }
   },
 

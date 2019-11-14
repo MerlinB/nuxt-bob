@@ -53,6 +53,9 @@ export default {
     },
     recipient() {
       return this.$store.state.contacts[this.address];
+    },
+    recipientName() {
+      return this.recipient ? this.recipient.name : "";
     }
   },
   async created() {

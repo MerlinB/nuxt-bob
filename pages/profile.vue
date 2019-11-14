@@ -21,9 +21,23 @@
         </v-card>
         <h3>Balance: {{ balance }} sats</h3>
         <p class="text-uppercase">{{ wallet.fundingAddress }}</p>
+
         <v-btn icon @click="copyAddress">
           <v-icon color="grey lighten-1">mdi-content-copy</v-icon>
         </v-btn>
+
+        <v-row>
+          <v-col>
+            <v-btn color="secondary" @click="showMnemonic = !showMnemonic">Show Mnemonic</v-btn>
+          </v-col>
+        </v-row>
+
+        <v-dialog v-model="showMnemonic" max-width="290">
+          <v-card>
+            <v-card-title class="headline">Mnemonic seed</v-card-title>
+            <v-card-text selectable>{{ this.xprivKey }}</v-card-text>
+          </v-card>
+        </v-dialog>
       </v-container>
     </v-content>
   </v-app>
@@ -32,13 +46,18 @@
 <script>
 import { mapGetters, mapActions, mapState } from "vuex";
 import qrcode from "qrcode-generator";
+import Mnemonic from "bsv/mnemonic";
 
 export default {
   middleware: "auth",
   data: () => ({
-    qrDataURL: undefined
+    qrDataURL: undefined,
+    showMnemonic: false
   }),
-  computed: { ...mapGetters(["wallet", "balance"]), ...mapState(["user"]) },
+  computed: {
+    ...mapGetters(["wallet", "balance"]),
+    ...mapState(["user", "xprivKey"])
+  },
   created() {
     this.syncUTXOs();
     this.genQRDataURL();
