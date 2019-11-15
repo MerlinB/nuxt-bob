@@ -1,8 +1,8 @@
 <template>
   <v-app>
-    <v-app-bar color="primary" dark app elevate-on-scroll>
+    <v-app-bar color="primary black--text" dark app elevate-on-scroll>
       <v-btn icon @click="$nuxt.$router.push('/')">
-        <v-icon>mdi-arrow-left</v-icon>
+        <v-icon color="black">mdi-arrow-left</v-icon>
       </v-btn>
       <v-toolbar-title>{{ recipient.name }}</v-toolbar-title>
     </v-app-bar>
@@ -16,8 +16,10 @@
           :key="i"
         >
           <div :class="['speech-bubble']">
-            {{ message.content }}
-            <span v-if="sentByMe(message)">
+            {{ message.content }} i:{{ message.index }} blk:{{ message.tx.blk ? message.tx.blk.i : null }} tx.i:{{ message.tx.i }}
+            <span
+              v-if="sentByMe(message)"
+            >
               <v-icon dark small>{{ message.confirmed ? "mdi-check-all" : "mdi-check"}}</v-icon>
             </span>
           </div>
@@ -125,12 +127,12 @@ export default {
 }
 
 .me .speech-bubble {
-  background: #00766c;
-  color: white;
+  background: #48acb8;
+  color: #ffffff;
 }
 
 .them .speech-bubble {
-  background: white;
+  background: #ffffff;
   color: #333;
 }
 
@@ -153,14 +155,14 @@ export default {
 }
 
 .me .speech-bubble::after {
-  border-left-color: #00766c;
+  border-left-color: #48acb8;
   border-right: 0;
   right: 0;
   margin-right: -0.8em;
 }
 
 .them .speech-bubble::after {
-  border-right-color: white;
+  border-right-color: #ffffff;
   border-left: 0;
   left: 0;
   margin-left: -0.8em;

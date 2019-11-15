@@ -1,8 +1,8 @@
 <template>
   <v-app>
-    <v-app-bar color="primary" dark app elevate-on-scroll>
+    <v-app-bar color="primary black--text" dark app elevate-on-scroll>
       <v-btn icon @click="$nuxt.$router.push('/')">
-        <v-icon>mdi-arrow-left</v-icon>
+        <v-icon color="black">mdi-arrow-left</v-icon>
       </v-btn>
       <v-toolbar-title>Profile</v-toolbar-title>
     </v-app-bar>
@@ -28,13 +28,16 @@
 
         <v-row>
           <v-col>
-            <v-btn color="secondary" @click="showMnemonic = !showMnemonic">Show Mnemonic</v-btn>
+            <v-btn
+              color="secondary black--text"
+              @click="showMnemonic = !showMnemonic"
+            >Show extended private key</v-btn>
           </v-col>
         </v-row>
 
         <v-dialog v-model="showMnemonic" max-width="290">
           <v-card>
-            <v-card-title class="headline">Mnemonic seed</v-card-title>
+            <v-card-title class="headline">Extended Private Key</v-card-title>
             <v-card-text selectable>{{ this.xprivKey }}</v-card-text>
           </v-card>
         </v-dialog>

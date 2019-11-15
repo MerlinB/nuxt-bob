@@ -2,12 +2,12 @@
   <div class="text-center ma-auto">
     <v-img src="/BOB_Logo.png" :contain="true" aspect-ratio="1.5"></v-img>
     <nuxt-link to="/signup">
-      <v-btn color="primary">Create Account</v-btn>
+      <v-btn color="secondary darken-2">Create Account</v-btn>
     </nuxt-link>
-    <v-btn color="secondary" to="login">Login</v-btn>
+    <v-btn color="secondary black--text" to="login">Login</v-btn>
     <v-row>
       <v-col>
-        <v-btn color="secondary" :loading="loading" @click="chooseUser">Testwallet</v-btn>
+        <v-btn color="secondary darken-4" :loading="loading" @click="chooseUser">Testwallet</v-btn>
       </v-col>
     </v-row>
     <v-dialog v-model="selectUser">

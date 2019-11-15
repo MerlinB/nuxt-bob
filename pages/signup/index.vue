@@ -10,7 +10,7 @@
       <p>Let us know who you are</p>
       <v-text-field v-model="name" :rules="nameRules" label="Username" class="mx-5" required></v-text-field>
 
-      <v-btn :disabled="!valid" type="submit" color="success" class="mt-8">Continue</v-btn>
+      <v-btn :disabled="!valid" type="submit" color="secondary darken-2" class="mt-8">Continue</v-btn>
     </v-form>
   </v-container>
 </template>

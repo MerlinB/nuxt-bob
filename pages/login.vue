@@ -1,8 +1,8 @@
 <template>
   <v-app>
-    <v-app-bar color="primary" dark app elevate-on-scroll>
+    <v-app-bar color="primary black--text" dark app elevate-on-scroll>
       <v-btn icon @click="$nuxt.$router.push('/')">
-        <v-icon>mdi-arrow-left</v-icon>
+        <v-icon color="black">mdi-arrow-left</v-icon>
       </v-btn>
       <v-toolbar-title>Login</v-toolbar-title>
     </v-app-bar>
@@ -18,7 +18,7 @@
 
       <v-btn
         :loading="loading"
-        color="primary"
+        color="secondary black--text"
         class="mt-6"
         :disabled="!xprivKey"
         @click="login"

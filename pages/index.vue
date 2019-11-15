@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-app-bar color="primary" dark app elevate-on-scroll>
+    <v-app-bar color="primary" app elevate-on-scroll>
       <v-toolbar-title>BOB Chat</v-toolbar-title>
 
       <div class="flex-grow-1"></div>
@@ -27,7 +27,7 @@
       <chats></chats>
 
       <nuxt-link to="/contacts">
-        <v-btn class="mx-2" fab fixed right bottom dark color="teal">
+        <v-btn class="mx-2" fab fixed right bottom color="secondary darken-2">
           <v-icon dark>mdi-plus</v-icon>
         </v-btn>
       </nuxt-link>

@@ -19,7 +19,7 @@
       </v-col>
     </v-row>
     <v-btn
-      color="success"
+      color="secondary darken-2"
       class="mt-8"
       :loading="loading"
       @click="createAccount"

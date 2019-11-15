@@ -3,6 +3,7 @@
     <v-textarea
       id="input"
       v-model="message"
+      color="secondary darken-2"
       row-height="1"
       :disabled="sending"
       :auto-grow="true"
