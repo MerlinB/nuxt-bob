@@ -16,10 +16,8 @@
           :key="i"
         >
           <div :class="['speech-bubble']">
-            {{ message.content }} i:{{ message.index }} blk:{{ message.tx.blk ? message.tx.blk.i : null }} tx.i:{{ message.tx.i }}
-            <span
-              v-if="sentByMe(message)"
-            >
+            {{ message.content }}
+            <span v-if="sentByMe(message)">
               <v-icon dark small>{{ message.confirmed ? "mdi-check-all" : "mdi-check"}}</v-icon>
             </span>
           </div>
