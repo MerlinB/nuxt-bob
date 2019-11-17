@@ -18,6 +18,7 @@
     "@nuxtjs/pwa": "^3.0.0-0",
     "@nuxtjs/toast": "^3.2.1",
     "bitindex-sdk": "^3.2.1",
+    "linkifyjs": "^2.1.8",
     "nuxt": "^2.10.1",
     "nuxt-clipboard2": "^0.2.1",
     "planter": "^0.3.1",

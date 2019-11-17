@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-app-bar color="primary" dark app elevate-on-scroll>
+    <v-app-bar color="primary" app elevate-on-scroll>
       <v-btn icon @click="back">
         <v-icon>mdi-arrow-left</v-icon>
       </v-btn>

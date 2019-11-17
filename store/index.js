@@ -308,11 +308,11 @@ export const getters = {
   },
 
   nextMempoolIndex: (state, getters) => {
-    const messages = Object.values(state.messages);
-    if (!messages) {
+    const messages = Object.values(state.messages).filter(m => !m.block);
+    if (!messages.length) {
       return 0;
     }
-    return Math.max(messages.filter(m => !m.block).map(m => m.index)) + 1;
+    return Math.max(...messages.map(m => m.index)) + 1;
   },
 
   getUser: (state, getters) => node => {
@@ -340,8 +340,8 @@ export const getters = {
       recipient: output.cell[1].s,
       content:
         node.tx.parent.a === state.user.address
-          ? getters.decrypt(output.cell[3].s)
-          : getters.decrypt(output.cell[2].s),
+          ? getters.decrypt(output.cell[3].s || output.cell[3].ls)
+          : getters.decrypt(output.cell[2].s || output.cell[2].ls),
       keyPath: node.keyPath,
       tx: node.tx
     };

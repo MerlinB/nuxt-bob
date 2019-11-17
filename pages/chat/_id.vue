@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-app-bar color="primary black--text" dark app elevate-on-scroll>
+    <v-app-bar color="primary" app elevate-on-scroll>
       <v-btn icon @click="$nuxt.$router.push('/')">
         <v-icon color="black">mdi-arrow-left</v-icon>
       </v-btn>
@@ -8,17 +8,25 @@
     </v-app-bar>
 
     <v-content style="background: #eceff1">
-      <v-list color="transparent" tile dense class="messageList" id="messageList">
+      <v-list
+        color="transparent"
+        tile
+        dense
+        class="messageList"
+        id="messageList"
+      >
         <v-list-item
           selectable
-          :class="['msg', (sentByMe(message) ? 'me': 'them')]"
+          :class="['msg', sentByMe(message) ? 'me' : 'them']"
           v-for="(message, i) in messages"
           :key="i"
         >
           <div :class="['speech-bubble']">
-            {{ message.content }}
+            <span v-html="linkify(message.content)"></span>
             <span v-if="sentByMe(message)">
-              <v-icon dark small>{{ message.confirmed ? "mdi-check-all" : "mdi-check"}}</v-icon>
+              <v-icon dark small>
+                {{ message.confirmed ? "mdi-check-all" : "mdi-check" }}
+              </v-icon>
             </span>
           </div>
         </v-list-item>
@@ -35,6 +43,7 @@ import { TreeHugger } from "planter";
 import { protocols } from "../../defaults";
 import bsv from "bsv";
 import chatInput from "../../components/Chat/input.vue";
+import linkifyStr from "linkifyjs/string";
 
 export default {
   middleware: "auth",
@@ -66,6 +75,10 @@ export default {
   },
   methods: {
     ...mapActions(["syncMessages", "syncContacts"]),
+
+    linkify(content) {
+      return linkifyStr(content);
+    },
 
     // createSocket() {
     //   // Not available yet
@@ -139,6 +152,7 @@ export default {
   border-radius: 0.3em;
   padding: 0.5em;
   width: fit-content;
+  word-break: break-all;
 }
 
 .speech-bubble::after {
