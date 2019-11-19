@@ -31,14 +31,14 @@
             <v-btn
               color="secondary black--text"
               @click="showMnemonic = !showMnemonic"
-            >Show extended private key</v-btn>
+            >Show Mnemonic Seed</v-btn>
           </v-col>
         </v-row>
 
         <v-dialog v-model="showMnemonic" max-width="290">
           <v-card>
-            <v-card-title class="headline">Extended Private Key</v-card-title>
-            <v-card-text selectable>{{ this.xprivKey }}</v-card-text>
+            <v-card-title class="headline">Mnemonic Seed</v-card-title>
+            <v-card-text selectable>{{ this.mnemonic }}</v-card-text>
           </v-card>
         </v-dialog>
       </v-container>
@@ -59,7 +59,7 @@ export default {
   }),
   computed: {
     ...mapGetters(["wallet", "balance"]),
-    ...mapState(["user", "xprivKey"])
+    ...mapState(["user", "mnemonic"])
   },
   created() {
     this.syncUTXOs();

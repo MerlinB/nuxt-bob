@@ -34,7 +34,7 @@ import qrcode from "qrcode-generator";
 
 export default {
   middleware: ({ store, redirest }) => {
-    if (store.state.userAddress && store.state.xprivKey) {
+    if (store.state.userAddress && store.state.mnemonic) {
       redirect("/");
     }
     if (!store.state.username) {
@@ -47,10 +47,11 @@ export default {
     qrDataURL: undefined
   }),
   computed: {
-    ...mapGetters(["wallet"])
+    ...mapGetters(["wallet"]),
+    ...mapState(["mnemonic"])
   },
   created: function() {
-    if (!this.$store.state.xprivKey) {
+    if (!this.$store.state.mnemonic) {
       this.genWallet();
     }
     this.genQRDataURL();
@@ -89,7 +90,7 @@ export default {
         console.log(tries);
       }
       this.loading = false;
-      this.$router.push("/");
+      this.$router.push("/signup/seed");
     },
 
     async genQRDataURL() {

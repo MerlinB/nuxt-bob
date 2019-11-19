@@ -5,7 +5,7 @@
       <v-btn color="secondary darken-2">Create Account</v-btn>
     </nuxt-link>
     <v-btn color="secondary black--text" to="login">Login</v-btn>
-    <v-row>
+    <!-- <v-row>
       <v-col>
         <v-btn color="secondary darken-4" :loading="loading" @click="chooseUser">Testwallet</v-btn>
       </v-col>
@@ -20,7 +20,7 @@
           </v-list-item>
         </v-list>
       </v-card>
-    </v-dialog>
+    </v-dialog>-->
 
     <!-- Workaround for weird nuxt routing issue (chunk loading error) -->
     <nuxt-link to="/signup/fundwallet"></nuxt-link>
@@ -47,13 +47,13 @@ export default {
   },
   computed: mapGetters(["wallet"]),
   methods: {
-    async chooseUser() {
-      this.setXprivKey(
-        "xprv9s21ZrQH143K2zJKULiRGhabnrAmZ68bzGh3LhivsgkW5U44meyTup6zeqc6vZa2PfM6x1KqoqVTauEA1qubAPNqsm87yAhHn4c9HTsohTb"
-      );
-      await this.syncUsers();
-      this.selectUser = true;
-    },
+    // async chooseUser() {
+    //   this.setXprivKey(
+    //     "xprv9s21ZrQH143K2zJKULiRGhabnrAmZ68bzGh3LhivsgkW5U44meyTup6zeqc6vZa2PfM6x1KqoqVTauEA1qubAPNqsm87yAhHn4c9HTsohTb"
+    //   );
+    //   await this.syncUsers();
+    //   this.selectUser = true;
+    // },
 
     async login(user) {
       this.setUser(user);
@@ -69,7 +69,7 @@ export default {
       this.users = nodes.map(node => this.$store.getters.getUser(node));
       this.loading = false;
     },
-    ...mapMutations(["setXprivKey", "setUser"])
+    ...mapMutations(["setMnemonic", "setUser"])
   }
 };
 </script>

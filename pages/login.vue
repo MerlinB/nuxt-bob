@@ -14,13 +14,13 @@
           <v-text-field :label="`${(n*2)+(m-1)-1}. Word`" class="pa-3" required></v-text-field>
         </v-col>
       </v-row>-->
-      <v-text-field v-model="xprivKey" label="Enter your extended private Key" class="ma-5"></v-text-field>
+      <v-text-field v-model="mnemonic" label="Enter your mnemonic seed" class="ma-5"></v-text-field>
 
       <v-btn
         :loading="loading"
         color="secondary black--text"
         class="mt-6"
-        :disabled="!xprivKey"
+        :disabled="!mnemonic"
         @click="login"
       >Continue</v-btn>
       <!-- </v-form> -->
@@ -35,7 +35,6 @@ import { protocols } from "../defaults";
 
 export default {
   data: () => ({
-    xprivKey: "",
     mnemonic: "",
     loading: false,
     seedRules: [
@@ -49,8 +48,8 @@ export default {
     async login() {
       this.loading = true;
       try {
-        // const mnemonic = Mnemonic.fromString(this.mnemonic);
-        this.$store.commit("setXprivKey", this.xprivKey);
+        const mnemonic = Mnemonic.fromString(this.mnemonic);
+        this.$store.commit("setMnemonic", mnemonic.toString());
 
         const node = await this.wallet.findSingleNode({
           find: {

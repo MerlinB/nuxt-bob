@@ -4,17 +4,11 @@
       <v-btn icon @click="$nuxt.$router.push('/')">
         <v-icon color="black">mdi-arrow-left</v-icon>
       </v-btn>
-      <v-toolbar-title>{{ recipient.name }}</v-toolbar-title>
+      <v-toolbar-title>{{ recipientName }}</v-toolbar-title>
     </v-app-bar>
 
     <v-content style="background: #eceff1">
-      <v-list
-        color="transparent"
-        tile
-        dense
-        class="messageList"
-        id="messageList"
-      >
+      <v-list color="transparent" tile dense class="messageList" id="messageList">
         <v-list-item
           selectable
           :class="['msg', sentByMe(message) ? 'me' : 'them']"
@@ -24,9 +18,7 @@
           <div :class="['speech-bubble']">
             <span v-html="linkify(message.content)"></span>
             <span v-if="sentByMe(message)">
-              <v-icon dark small>
-                {{ message.confirmed ? "mdi-check-all" : "mdi-check" }}
-              </v-icon>
+              <v-icon dark small>{{ message.confirmed ? "mdi-check-all" : "mdi-check" }}</v-icon>
             </span>
           </div>
         </v-list-item>
@@ -152,7 +144,7 @@ export default {
   border-radius: 0.3em;
   padding: 0.5em;
   width: fit-content;
-  word-break: break-all;
+  word-break: break-word;
 }
 
 .speech-bubble::after {

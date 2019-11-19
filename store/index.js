@@ -5,6 +5,7 @@ import { instance } from "bitindex-sdk";
 import VuexPersistence from "vuex-persist";
 import bsv from "bsv";
 import bsvEcies from "bsv/ecies";
+import Mnemonic from "bsv/mnemonic";
 import { protocols } from "../defaults";
 
 const bitindex = instance();
@@ -13,7 +14,7 @@ const vuexLocal = new VuexPersistence({
 });
 
 export const state = () => ({
-  xprivKey: undefined,
+  mnemonic: undefined,
   username: undefined, // Only for usernode creation
   utxos: [],
   userNodeAddress: undefined,
@@ -31,8 +32,8 @@ export const mutations = {
     state.username = name;
   },
 
-  setXprivKey(state, xprivKey) {
-    state.xprivKey = xprivKey;
+  setMnemonic(state, mnemonic) {
+    state.mnemonic = mnemonic;
   },
 
   setUTXOs(state, utxos) {
@@ -66,12 +67,7 @@ export const mutations = {
 
 export const actions = {
   async genWallet({ commit }) {
-    const xprivKey = bsv.HDPrivateKey.fromRandom().toString();
-    commit("setXprivKey", xprivKey);
-    // commit(
-    //   "setXprivKey",
-    //   "xprv9s21ZrQH143K2zJKULiRGhabnrAmZ68bzGh3LhivsgkW5U44meyTup6zeqc6vZa2PfM6x1KqoqVTauEA1qubAPNqsm87yAhHn4c9HTsohTb"
-    // );
+    commit("setMnemonic", Mnemonic.fromRandom().toString());
   },
 
   async syncUTXOs({ commit, getters }) {
@@ -211,13 +207,13 @@ export const actions = {
 
 export const getters = {
   xprivKey: state => {
-    if (state.xprivKey) {
-      return bsv.HDPrivateKey.fromString(state.xprivKey);
+    if (state.mnemonic) {
+      return Mnemonic.fromString(state.mnemonic).toHDPrivateKey();
     }
   },
 
-  wallet: state => {
-    return new Planter(state.xprivKey);
+  wallet: (state, getters) => {
+    return new Planter(getters.xprivKey.toString());
   },
 
   balance: state => {
@@ -235,14 +231,14 @@ export const getters = {
   },
 
   decryptECIES: (state, getters) => {
-    if (state.xprivKey && state.user) {
+    if (state.mnemonic && state.user) {
       const keyChild = getters.xprivKey.deriveChild(state.user.keyPath);
       return bsvEcies().privateKey(keyChild.privateKey);
     }
   },
 
   encryptECIES: (state, getters) => {
-    if (state.xprivKey && state.user) {
+    if (state.mnemonic && state.user) {
       const keyChild = getters.xprivKey.deriveChild(state.user.keyPath);
       return bsvEcies().publicKey(keyChild.publicKey);
     }
@@ -254,6 +250,29 @@ export const getters = {
     }, new Set());
     return contacts.add(state.user.address);
   },
+
+  // TODO
+  // sortedContacts: (state, getters) => {
+  //   const messages = getters.sortedMessages.reverse();
+  //   return Object.values(state.contacts).sort((a, b) => {
+  //     console.log(
+  //       messages.findIndex(
+  //         m => m.sender === b.address || m.recipient === b.address
+  //       ),
+  //       messages.findIndex(
+  //         m => m.sender === a.address || m.recipient === a.address
+  //       )
+  //     );
+  //     return (
+  //       messages.findIndex(
+  //         m => m.sender === a.address || m.recipient === a.address
+  //       ) -
+  //       messages.findIndex(
+  //         m => m.sender === b.address || m.recipient === b.address
+  //       )
+  //     );
+  //   });
+  // },
 
   messagesByChat: (state, getters) => address => {
     return getters.sortedMessages.filter(message => {

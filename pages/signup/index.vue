@@ -20,7 +20,7 @@ import { mapMutations } from "vuex";
 
 export default {
   middleware: ({ store, redirect }) => {
-    if (store.state.user && store.state.xprivKey) {
+    if (store.state.user && store.state.mnemonic) {
       redirect("/");
     }
   },
