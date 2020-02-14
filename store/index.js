@@ -213,7 +213,7 @@ export const getters = {
   },
 
   wallet: (state, getters) => {
-    return new Planter(getters.xprivKey.toString());
+    return new Planter({ xprivKey: getters.xprivKey.toString() });
   },
 
   balance: state => {
