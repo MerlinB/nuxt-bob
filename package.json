@@ -12,20 +12,20 @@
     "deploy": "push-dir --dir=dist --branch=gh-pages --cleanup"
   },
   "dependencies": {
-    "@nuxtjs/axios": "^5.9.3",
-    "@nuxtjs/pwa": "^3.0.0-0",
+    "@nuxtjs/axios": "^5.9.5",
+    "@nuxtjs/pwa": "^3.0.0-beta.20",
     "@nuxtjs/toast": "^3.3.0",
     "bitindex-sdk": "^3.4.2",
-    "linkifyjs": "^2.1.8",
+    "linkifyjs": "^2.1.9",
     "nuxt": "^2.11.0",
     "nuxt-clipboard2": "^0.2.1",
-    "planter": "^0.3.1",
+    "planter": "^0.4.0",
     "qrcode-generator": "^1.4.4",
     "vuex-persist": "^2.2.0"
   },
   "devDependencies": {
     "@nuxt/typescript-build": "^0.2.10",
-    "@nuxtjs/vuetify": "^1.10.1",
+    "@nuxtjs/vuetify": "^1.10.3",
     "push-dir": "^0.4.1"
   }
 }
