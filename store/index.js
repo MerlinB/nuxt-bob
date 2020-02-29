@@ -1,12 +1,10 @@
-import { Planter, TreeHugger } from "planter";
-import MetaNode from "planter/lib/meta-node";
-import { getRandomKeyPath } from "planter/lib/utils";
 import { instance } from "bitindex-sdk";
 import VuexPersistence from "vuex-persist";
 import bsv from "bsv";
 import bsvEcies from "bsv/ecies";
-import Mnemonic from "bsv/mnemonic";
 import { protocols } from "../defaults";
+import Random from "bsv/lib/crypto/random";
+import bitdb from "../utils/bitdb";
 
 const bitindex = instance();
 const vuexLocal = new VuexPersistence({
@@ -14,34 +12,27 @@ const vuexLocal = new VuexPersistence({
 });
 
 export const state = () => ({
-  mnemonic: undefined,
-  username: undefined, // Only for usernode creation
-  utxos: [],
-  userNodeAddress: undefined,
-  user: undefined,
+  hdPrivKey: undefined,
+  account: undefined,
+  password: undefined,
+  backup: false,
+  indentity: undefined,
   messages: {},
-  contacts: {}
+  contacts: {},
+  utxos: []
 });
 
 export const mutations = {
-  setUserAddress(state, address) {
-    state.userAddress = address;
+  setHDPrivKey(state, privKey) {
+    state.hdPrivKey = privKey;
   },
 
-  setUsername(state, name) {
-    state.username = name;
-  },
-
-  setMnemonic(state, mnemonic) {
-    state.mnemonic = mnemonic;
+  setIdentity(state, keyPath) {
+    state.indentity = keyPath;
   },
 
   setUTXOs(state, utxos) {
     state.utxos = utxos;
-  },
-
-  setUser(state, user) {
-    state.user = user;
   },
 
   updateMessages(state, messages) {
@@ -52,22 +43,21 @@ export const mutations = {
     state.contacts = { ...state.contacts, ...contacts };
   },
 
-  setUserNodeAddress(state, address) {
-    state.userNodeAddress = address;
-  },
-
-  resetUser(state) {
+  reset(state) {
     state.messages = {};
     state.contacts = {};
-    state.userNodeAddress = undefined;
-    state.username = undefined;
-    state.user = undefined;
+    state.hdPrivKey = undefined;
+    state.account = undefined;
+    state.password = undefined;
+    state.identity = undefined;
+    state.utxos = [];
+    state.backup = false;
   }
 };
 
 export const actions = {
-  async genWallet({ commit }) {
-    commit("setMnemonic", Mnemonic.fromRandom().toString());
+  genWallet({ commit }) {
+    commit("setHDPrivKey", bsv.hdPrivKey.fromRandom().toString());
   },
 
   async syncUTXOs({ commit, getters }) {
@@ -77,10 +67,21 @@ export const actions = {
     commit("setUTXOs", utxos);
   },
 
-  async createUser({ commit, state, getters }) {
-    if (!state.username) {
-      throw new Error("Username not set");
+  async backup({ commit, state, getters }) {
+    if (!state.account || !state.password) {
+      throw new Error("Missing account/password.");
     }
+    if (!state.hdPrivKey) {
+      // Requires already funded wallet.
+      throw new Error("Missing wallet.");
+    }
+    if (!state.indentity) {
+      commit("setIdentity", getRandomKeyPath());
+    }
+
+    const data = [getters.accountHash, getters.settings];
+    script = buildScript(data);
+
     const keyPath = getRandomKeyPath();
     const encryptionKey = getters.xprivKey
       .deriveChild(keyPath)
@@ -96,83 +97,94 @@ export const actions = {
     console.log(response);
   },
 
-  async syncUser({ commit, getters, state }) {
-    const find = {
-      "out.tape.cell": { $elemMatch: { s: protocols.user, i: 0 } }
-    };
+  // async syncUser({ commit, getters, state }) {
+  //   const find = {
+  //     "out.tape.cell": { $elemMatch: { s: protocols.user, i: 0 } }
+  //   };
 
-    if (state.userNodeAddress) {
-      find["node.a"] = state.userNodeAddress;
-    }
+  //   if (state.userNodeAddress) {
+  //     find["node.a"] = state.userNodeAddress;
+  //   }
 
-    const response = await getters.wallet.findSingleNode({ find });
+  //   const response = await getters.wallet.findSingleNode({ find });
 
-    if (response) {
-      commit("setUser", getters.getUser(response));
-    }
-  },
+  //   if (response) {
+  //     commit("setUser", getters.getUser(response));
+  //   }
+  // },
 
-  async syncMessages({ commit, getters, state }, recipient) {
-    if (!state.user) {
-      return;
-    }
+  // async syncMessages({ commit, getters, state }, recipient) {
+  //   if (!state.user) {
+  //     return;
+  //   }
 
-    const query = {
-      $or: [
-        {
-          "out.tape": {
-            $elemMatch: {
-              cell: {
-                $all: [
-                  { $elemMatch: { s: protocols.message, i: 0 } },
-                  { $elemMatch: { s: state.user.address, i: 1 } }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "parent.a": state.user.address,
-          "out.tape": {
-            $elemMatch: {
-              cell: {
-                $all: [{ $elemMatch: { s: protocols.message, i: 0 } }]
-              }
-            }
-          }
-        }
-      ]
-    };
+  //   const query = {
+  //     $or: [
+  //       {
+  //         "out.tape": {
+  //           $elemMatch: {
+  //             cell: {
+  //               $all: [
+  //                 { $elemMatch: { s: protocols.message, i: 0 } },
+  //                 { $elemMatch: { s: state.user.address, i: 1 } }
+  //               ]
+  //             }
+  //           }
+  //         }
+  //       },
+  //       {
+  //         "parent.a": state.user.address,
+  //         "out.tape": {  // async syncContacts({ commit, getters, state }, addresses) {
+  //           //   const response = await TreeHugger.findAllNodes({
+  //           //     find: {
+  //           //       "node.a": { $in: addresses ? addresses : [...getters.contactAddresses] }
+  //           //     }
+  //           //   });
 
-    if (recipient) {
-      query.$or[0]["parent.a"] = recipient;
-      query.$or[0]["out.tape"].$elemMatch.cell.$all.push({
-        s: recipient,
-        i: 3
-      });
-    }
+  //           //   const contacts = response.reduce((map, node, index) => {
+  //           //     map[node.address] = getters.getUser(node);
+  //           //     return map;
+  //           //   }, {});
 
-    const response = await TreeHugger.findAllNodes({
-      find: query,
-      limit: 200
-    });
+  //           //   commit("updateContacts", contacts);
+  //           // },
+  //               $all: [{ $elemMatch: { s: protocols.message, i: 0 } }]
+  //             }
+  //           }
+  //         }
+  //       }
+  //     ]
+  //   };
 
-    const currentIndex = getters.nextMempoolIndex;
-    const messages = response.reduce((map, node, index) => {
-      const existing = state.messages ? state.messages[node.address] : null;
-      map[node.address] = {
-        index: node.tx.blk
-          ? node.tx.i
-          : existing
-          ? existing.index
-          : currentIndex + index,
-        confirmed: true,
-        ...getters.getMessage(node)
-      };
-      return map;
-    }, {});
-    commit("updateMessages", messages);
-  },
+  //   if (recipient) {
+  //     query.$or[0]["parent.a"] = recipient;
+  //     query.$or[0]["out.tape"].$elemMatch.cell.$all.push({
+  //       s: recipient,
+  //       i: 3
+  //     });
+  //   }
+
+  //   const response = await TreeHugger.findAllNodes({
+  //     find: query,
+  //     limit: 200
+  //   });
+
+  //   const currentIndex = getters.nextMempoolIndex;
+  //   const messages = response.reduce((map, node, index) => {
+  //     const existing = state.messages ? state.messages[node.address] : null;
+  //     map[node.address] = {
+  //       index: node.tx.blk
+  //         ? node.tx.i
+  //         : existing
+  //         ? existing.index
+  //         : currentIndex + index,
+  //       confirmed: true,
+  //       ...getters.getMessage(node)
+  //     };
+  //     return map;
+  //   }, {});
+  //   commit("updateMessages", messages);
+  // },
 
   addMessage({ commit, getters }, { address, recipient, content }) {
     commit("updateMessages", {
@@ -189,19 +201,50 @@ export const actions = {
 
   async sendMessage({ commit, getters }, { message, recipient }) {},
 
-  async syncContacts({ commit, getters, state }, addresses) {
-    const response = await TreeHugger.findAllNodes({
+  // async syncContacts({ commit, getters, state }, addresses) {
+  //   const response = await TreeHugger.findAllNodes({
+  //     find: {
+  //       "node.a": { $in: addresses ? addresses : [...getters.contactAddresses] }
+  //     }
+  //   });
+
+  //   const contacts = response.reduce((map, node, index) => {
+  //     map[node.address] = getters.getUser(node);
+  //     return map;
+  //   }, {});
+
+  //   commit("updateContacts", contacts);
+  // },
+
+  encryptSettings() {
+    if (!state.password) {
+      throw new Error("No password set.");
+    }
+    const salt = Random.getRandomBuffer(10);
+  },
+
+  async loadSettings({ commit, getters, state }) {
+    if (!state.account || !state.password) {
+      throw new Error("Missing account/password.");
+    }
+
+    const query = {
       find: {
-        "node.a": { $in: addresses ? addresses : [...getters.contactAddresses] }
+        "out.tape": {
+          cell: {
+            $elemMatch: {
+              ii: 1,
+              s: defaults.account
+            },
+            $size: 3
+          }
+        }
       }
-    });
+    };
 
-    const contacts = response.reduce((map, node, index) => {
-      map[node.address] = getters.getUser(node);
-      return map;
-    }, {});
+    const response = await bitdb.findSingle(query);
 
-    commit("updateContacts", contacts);
+    const encrypted = response.out[0].tape;
   }
 };
 
@@ -364,6 +407,13 @@ export const getters = {
       keyPath: node.keyPath,
       tx: node.tx
     };
+  },
+
+  getSettings: state => {
+    return JSON.stringify({
+      hdPrivKey: state.hdPrivKey,
+      identity: state.identity
+    });
   }
 };
 
